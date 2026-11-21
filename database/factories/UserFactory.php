@@ -36,6 +36,24 @@ class UserFactory extends Factory
         ];
     }
 
+    public function admin(): static
+    {
+        return $this->state(fn () => ['role' => 'admin', 'can_edit' => true]);
+    }
+
+    public function jury(): static
+    {
+        return $this->state(fn () => ['role' => 'jury']);
+    }
+
+    /**
+     * A user the admin granted the "Edit" permission.
+     */
+    public function editor(): static
+    {
+        return $this->state(fn () => ['can_edit' => true]);
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */

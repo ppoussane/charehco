@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html {!! App\Support\Locale::htmlAttributes() !!} class="dark">
     <head>
         @include('partials.head')
     </head>
@@ -10,25 +10,60 @@
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
 
+            @php($user = auth()->user())
+
             <flux:sidebar.nav>
                 <flux:sidebar.group :heading="__('Platform')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    @if ($user->isParticipant())
+                        <flux:sidebar.item icon="inbox-stack" :href="route('entries.index')" :current="request()->routeIs('entries.*')" wire:navigate>
+                            {{ __('My entries') }}
+                        </flux:sidebar.item>
+                    @endif
+                    @if ($user->isJury() || $user->isAdmin())
+                        <flux:sidebar.item icon="scale" :href="route('review.index')" :current="request()->routeIs('review.*')" wire:navigate>
+                            {{ __('Jury review') }}
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
+
+                @can('edit-content')
+                    <flux:sidebar.group :heading="__('Content')" class="grid">
+                        <flux:sidebar.item icon="building-office-2" :href="route('manage.projects.index')" :current="request()->routeIs('manage.projects.*')" wire:navigate>
+                            {{ __('Projects') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endcan
+
+                @can('admin')
+                    <flux:sidebar.group :heading="__('Admin')" class="grid">
+                        <flux:sidebar.item icon="trophy" :href="route('admin.competitions.index')" :current="request()->routeIs('admin.competitions.*')" wire:navigate>
+                            {{ __('Competitions') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="users" :href="route('admin.users')" :current="request()->routeIs('admin.users')" wire:navigate>
+                            {{ __('Users') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="photo" :href="route('admin.home-page')" :current="request()->routeIs('admin.home-page')" wire:navigate>
+                            {{ __('Home page') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endcan
             </flux:sidebar.nav>
 
             <flux:spacer />
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
+                <flux:sidebar.item icon="trophy" :href="route('competitions.index')">
+                    {{ __('Browse competitions') }}
                 </flux:sidebar.item>
-
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
+                <flux:sidebar.item icon="globe-alt" :href="route('home')">
+                    {{ __('View website') }}
                 </flux:sidebar.item>
             </flux:sidebar.nav>
+
+            <x-locale-switch class="px-2" />
 
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
         </flux:sidebar>

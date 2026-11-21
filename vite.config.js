@@ -10,11 +10,25 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/passkeys.js',
+                'resources/css/site.css',
+                'resources/js/site.js',
             ],
             refresh: true,
             fonts: [
                 bunny('Instrument Sans', {
                     weights: [400, 500, 600],
+                }),
+                bunny('Taviraj', {
+                    weights: [300, 400, 500],
+                    styles: ['normal', 'italic'],
+                }),
+                bunny('Hanken Grotesk', {
+                    weights: [300, 400, 500, 600],
+                }),
+                // Persian (FA) pages.
+                bunny('Vazirmatn', {
+                    weights: [300, 400, 500, 600],
+                    subsets: ['arabic', 'latin'],
                 }),
             ],
         }),

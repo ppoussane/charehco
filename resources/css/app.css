@@ -36,6 +36,11 @@
     }
 }
 
+/* Farsi (RTL) uses Vazirmatn, which has Persian glyphs. */
+html[lang='fa'] {
+    --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+}
+
 @layer base {
 
     *,
