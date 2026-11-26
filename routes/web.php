@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\CompetitionController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EntryDocumentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HomePreviewController;
@@ -19,6 +21,11 @@ Route::get('/', HomeController::class)->name('home');
 Route::get('language/{locale}', LocaleController::class)
     ->whereIn('locale', array_keys(config('charehco.locales')))
     ->name('locale.switch');
+
+Route::get('about', AboutController::class)->name('about');
+
+Route::get('contact', [ContactController::class, 'show'])->name('contact');
+Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
 
 Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
 Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
@@ -56,6 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Admin only.
     Route::middleware('can:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::livewire('users', 'pages::admin.users')->name('users');
+        Route::livewire('messages', 'pages::admin.messages')->name('messages');
 
         Route::livewire('competitions', 'pages::admin.competitions.index')->name('competitions.index');
         Route::livewire('competitions/create', 'pages::admin.competitions.form')->name('competitions.create');

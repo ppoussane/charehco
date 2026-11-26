@@ -45,6 +45,10 @@
                         <flux:sidebar.item icon="users" :href="route('admin.users')" :current="request()->routeIs('admin.users')" wire:navigate>
                             {{ __('Users') }}
                         </flux:sidebar.item>
+                        @php($unreadMessages = App\Models\ContactMessage::unread()->count())
+                        <flux:sidebar.item icon="envelope" :href="route('admin.messages')" :current="request()->routeIs('admin.messages')" :badge="$unreadMessages ?: null" wire:navigate>
+                            {{ __('Messages') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item icon="photo" :href="route('admin.home-page')" :current="request()->routeIs('admin.home-page')" wire:navigate>
                             {{ __('Home page') }}
                         </flux:sidebar.item>

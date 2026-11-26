@@ -19,6 +19,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Contact details
+    |--------------------------------------------------------------------------
+    |
+    | Shown on the Contact page. Leave a value empty to hide that line.
+    | Contact form messages are emailed to the admin and kept in Admin → Messages.
+    |
+    */
+
+    'contact' => [
+        'email' => env('CONTACT_EMAIL'),
+        'phone' => env('CONTACT_PHONE'),
+        'address' => env('CONTACT_ADDRESS'),
+        'address_fa' => env('CONTACT_ADDRESS_FA'),
+        'instagram' => env('CONTACT_INSTAGRAM'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Languages
     |--------------------------------------------------------------------------
     |

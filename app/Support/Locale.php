@@ -42,6 +42,18 @@ class Locale
     }
 
     /**
+     * Show digits as Persian numerals on Farsi pages (e.g. 01 → ۰۱).
+     */
+    public static function digits(string|int $value): string
+    {
+        $value = (string) $value;
+
+        return static::isFarsi()
+            ? strtr($value, ['0' => '۰', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴', '5' => '۵', '6' => '۶', '7' => '۷', '8' => '۸', '9' => '۹'])
+            : $value;
+    }
+
+    /**
      * Attributes for the <html> tag: lang and dir.
      */
     public static function htmlAttributes(): string
