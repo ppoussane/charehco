@@ -1,6 +1,6 @@
 /*
- * Public website interactions: header state, mobile menu, fade sliders
- * and GSAP scroll animations (parallax, fade-up, clip-path reveal).
+ * Public website interactions: header state, mobile menu, fade sliders,
+ * the 3D villa and GSAP scroll animations (parallax, fade-up, clip-path reveal).
  */
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -134,6 +134,28 @@ function initReveal() {
     });
 }
 
+/** The 3D villa. Three.js is only downloaded when the section comes near. */
+function initVilla() {
+    const stage = document.querySelector('[data-villa]');
+    if (!stage) return;
+
+    stage.dataset.villaState = 'loading';
+    const observer = new IntersectionObserver(
+        (entries) => {
+            if (!entries.some((entry) => entry.isIntersecting)) return;
+            observer.disconnect();
+            import('./villa/viewer.js')
+                .then(({ mountVilla }) => mountVilla(stage, { reduceMotion }))
+                .catch((error) => {
+                    stage.dataset.villaState = 'unsupported';
+                    console.error(error);
+                });
+        },
+        { rootMargin: '600px 0px' },
+    );
+    observer.observe(stage);
+}
+
 /** Hero headline lines rise in after load. */
 function initHeroTitle() {
     const lines = document.querySelectorAll('[data-hero-line]');
@@ -145,6 +167,7 @@ function initHeroTitle() {
 function boot() {
     initHeader();
     initSliders();
+    initVilla();
 
     if (!reduceMotion) {
         initHeroTitle();

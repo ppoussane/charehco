@@ -63,7 +63,60 @@
         </div>
     </section>
 
-    {{-- 3. Competition spotlight --}}
+    {{-- 3. A villa in 3D: hover and scroll (or drag) to turn it. See resources/js/villa. --}}
+    @php
+        $villaFeatures = [
+            [__('Glass ground floor'), __('Living space that opens onto the deck and the pool.')],
+            [__('Floating upper floor'), __('Bedrooms in a white volume that reaches out over the terrace.')],
+            [__('Stone and timber'), __('A long stone wall and chimney anchor the house; timber fins shade the windows.')],
+        ];
+    @endphp
+    <section class="overflow-hidden pb-16 sm:pb-24 lg:pb-32" aria-labelledby="home-villa-title">
+        <div class="container-site">
+            <div class="grid items-center gap-y-10 lg:mx-[8.333%] lg:grid-cols-12 lg:gap-x-8">
+                <div class="lg:col-span-4" data-fade>
+                    <span class="pill">{{ __('3D model') }}</span>
+                    <h2 id="home-villa-title" class="display-2 mt-6 flex flex-col">
+                        <span>{{ __('Architecture in the round.') }}</span>
+                        <em class="text-bronze">{{ __('A two-level villa in 3D') }}</em>
+                    </h2>
+                    <p class="mt-6 max-w-md">{{ __('A design deserves to be seen from every side. This is our first interactive model; projects and competition entries will soon open the same way.') }}</p>
+                    <ul class="mt-8 border-t border-ink/10">
+                        @foreach ($villaFeatures as $i => [$feature, $detail])
+                            <li class="flex gap-5 border-b border-ink/10 py-4">
+                                <span class="text-[14px] leading-7 text-gold" aria-hidden="true">{{ App\Support\Locale::digits(sprintf('%02d', $i + 1)) }}</span>
+                                <span>
+                                    <span class="block leading-7 font-normal">{{ $feature }}</span>
+                                    <span class="block text-[15px] leading-7 text-ink/65">{{ $detail }}</span>
+                                </span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+
+                <figure class="lg:col-span-8">
+                    <div class="villa-stage" data-villa aria-describedby="villa-hint"
+                        data-label="{{ __('Turn the 3D model of a two-level modern villa') }}"
+                        data-text-front="{{ __('Front view') }}"
+                        data-text-right="{{ __(':degrees° to the right') }}"
+                        data-text-left="{{ __(':degrees° to the left') }}">
+                        <p class="villa-stage__status">{{ __('Loading the 3D model…') }}</p>
+                        <p class="villa-stage__fallback">{{ __('Your browser can’t show the 3D model.') }}</p>
+                    </div>
+                    <figcaption id="villa-hint" class="villa-hint">
+                        <span>
+                            <span class="villa-hint__hover">{{ __('Hover over the villa and scroll to turn it.') }}</span>
+                            <span class="villa-hint__touch">{{ __('Swipe sideways to turn the villa.') }}</span>
+                            <span class="sr-only">{{ __('You can also drag it, or use the arrow keys.') }}</span>
+                        </span>
+                        <span class="villa-track" dir="ltr" data-villa-track aria-hidden="true"></span>
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    {{-- 4. Competition spotlight --}}
     @if ($competition)
         <section class="relative h-svh max-h-[820px] min-h-[600px] overflow-hidden bg-ink text-white" data-parallax-parent aria-labelledby="home-competition-title">
             <div class="parallax-media" data-parallax-item data-slider="spotlight" data-autoplay="7500">

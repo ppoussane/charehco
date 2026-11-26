@@ -248,6 +248,89 @@
         @apply mt-2 text-[14px] leading-6 text-red-700;
     }
 
+    /* Interactive 3D villa on the home page (resources/js/villa) */
+    .villa-stage {
+        @apply relative aspect-[4/3] w-full cursor-grab touch-pan-y outline-none select-none lg:aspect-[16/11];
+        background: radial-gradient(ellipse 58% 50% at 50% 56%, rgb(255 255 255 / 0.7), rgb(255 255 255 / 0) 72%);
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .villa-stage:focus-visible {
+        outline: 1px solid var(--color-gold);
+        outline-offset: 6px;
+    }
+
+    .villa-stage.is-dragging {
+        @apply cursor-grabbing;
+    }
+
+    .villa-stage canvas {
+        @apply absolute inset-0 size-full opacity-0 transition-opacity duration-1000;
+    }
+
+    .villa-stage[data-villa-state='ready'] canvas {
+        @apply opacity-100;
+    }
+
+    /* Without scripts or WebGL the fallback text shows; while loading, the status. */
+    .villa-stage__status,
+    .villa-stage__fallback {
+        @apply absolute inset-0 m-0 flex items-center justify-center px-6 text-center text-[15px] text-ink/55;
+    }
+
+    .villa-stage__status,
+    .villa-stage:is([data-villa-state='loading'], [data-villa-state='ready']) .villa-stage__fallback {
+        display: none;
+    }
+
+    .villa-stage[data-villa-state='loading'] .villa-stage__status {
+        display: flex;
+    }
+
+    .villa-hint {
+        @apply mt-5 flex items-center justify-between gap-6 text-[15px] leading-6 text-ink/60;
+    }
+
+    figure:has(> [data-villa-state='unsupported']) .villa-hint {
+        display: none;
+    }
+
+    /* Touch screens get the swipe hint. Desktops get the hover hint, including
+       Linux desktops that report no pointer at all. */
+    .villa-hint__touch {
+        display: none;
+    }
+
+    @media (pointer: coarse) {
+        .villa-hint__hover {
+            display: none;
+        }
+
+        .villa-hint__touch {
+            display: inline;
+        }
+    }
+
+    /* How far the villa has turned, drawn like the slider lines. */
+    .villa-track {
+        @apply relative block h-3 w-28 shrink-0 sm:w-40;
+    }
+
+    .villa-track::before,
+    .villa-track::after {
+        content: '';
+        @apply absolute top-1/2 h-0.5 -translate-y-1/2 rounded-[1px];
+    }
+
+    .villa-track::before {
+        @apply inset-x-0 bg-bronze/25;
+    }
+
+    .villa-track::after {
+        @apply w-1/4 bg-bronze;
+        left: calc(var(--turn, 0.5) * 75%);
+    }
+
     /* Long-form text */
     .prose-site {
         @apply max-w-none text-[17px] leading-[2];

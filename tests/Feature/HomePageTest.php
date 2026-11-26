@@ -23,6 +23,21 @@ test('the home page works without any content', function () {
     $this->get(route('home'))->assertOk();
 });
 
+test('the home page has the interactive 3D villa in English and Farsi', function () {
+    // The script fills in :degrees itself, so the placeholder must reach the page untouched.
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('data-villa', false)
+        ->assertSee('A two-level villa in 3D')
+        ->assertSee('Hover over the villa and scroll to turn it.')
+        ->assertSee('data-text-right=":degrees° to the right"', false);
+
+    $this->withSession(['locale' => 'fa'])->get(route('home'))
+        ->assertSee('ویلایی دو طبقه، سه‌بعدی')
+        ->assertSee('نشانگر را روی ویلا ببرید و اسکرول کنید تا بچرخد.')
+        ->assertSee('data-text-right=":degrees درجه به راست"', false);
+});
+
 test('home image changes stay in draft until the admin publishes them', function () {
     Storage::fake('public');
     $admin = User::factory()->admin()->create();
