@@ -23,19 +23,42 @@ test('the home page works without any content', function () {
     $this->get(route('home'))->assertOk();
 });
 
-test('the home page has the interactive 3D villa in English and Farsi', function () {
-    // The script fills in :degrees itself, so the placeholder must reach the page untouched.
+test('the home page opens with the 3D villa, in English and Farsi', function () {
+    // The first still frame shows until the 3D view (or, without WebGL, the turning frames) is ready.
     $this->get(route('home'))
         ->assertOk()
-        ->assertSee('data-villa', false)
-        ->assertSee('A two-level villa in 3D')
+        ->assertSee('images/villa/frame-00.webp', false)
+        ->assertSee('data-frames="'.e(HomePage::villaFrames()).'"', false)
         ->assertSee('Hover over the villa and scroll to turn it.')
-        ->assertSee('data-text-right=":degrees° to the right"', false);
+        // The script fills in :n and :total itself, so the placeholders must reach the page untouched.
+        ->assertSee('data-text-view="View :n of :total"', false)
+        ->assertSee('data-label="Show view :n"', false);
 
     $this->withSession(['locale' => 'fa'])->get(route('home'))
-        ->assertSee('ویلایی دو طبقه، سه‌بعدی')
         ->assertSee('نشانگر را روی ویلا ببرید و اسکرول کنید تا بچرخد.')
-        ->assertSee('data-text-right=":degrees درجه به راست"', false);
+        ->assertSee('data-text-view="نمای :n از :total"', false);
+});
+
+test('every still frame of the villa has been rendered', function () {
+    preg_match('/FRAME_COUNT = (\d+)/', file_get_contents(resource_path('js/villa/settings.js')), $match);
+
+    expect(glob(public_path('images/villa/frame-*.webp')))->toHaveCount((int) $match[1]);
+});
+
+test('competitions come before projects on the home page and in the menu', function () {
+    Project::factory()->count(2)->create(['show_on_home' => true]);
+    Competition::factory()->create(['show_on_home' => true]);
+
+    $html = $this->get(route('home'))->assertOk()->getContent();
+    $positions = fn (array $markers) => array_map(fn ($marker) => strpos($html, $marker), $markers);
+
+    $sections = $positions(['data-villa', 'home-competition-title', 'home-steps-title', 'home-projects-title', 'home-banner-title']);
+    $menu = $positions(['>Competitions</a>', '>Projects</a>', '>About us</a>']);
+
+    foreach ([$sections, $menu] as $order) {
+        expect($order)->not->toContain(false)
+            ->and($order)->toBe(collect($order)->sort()->values()->all());
+    }
 });
 
 test('home image changes stay in draft until the admin publishes them', function () {

@@ -13,7 +13,7 @@ class Locale
      */
     public static function supported(): array
     {
-        return config('charehco.locales');
+        return config('chareharch.locales');
     }
 
     public static function isSupported(?string $locale): bool

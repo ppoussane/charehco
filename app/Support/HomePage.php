@@ -17,21 +17,24 @@ class HomePage
     public const DRAFT = 'home.draft';
 
     /**
-     * Editable image slots: key => [label, help, min, max].
+     * Editable image slots, in page order: key => [label, help, min, max].
+     *
+     * The banner photos are stored under 'hero' because they used to fill the
+     * top of the page; the key is kept so saved images carry over.
      *
      * @var array<string, array{label: string, help: string, min: int, max: int}>
      */
     public const SLOTS = [
-        'hero' => [
-            'label' => 'Hero slideshow',
-            'help' => 'Full-screen images at the top of the page. They cross-fade every few seconds.',
-            'min' => 1,
-            'max' => 5,
-        ],
         'spotlight' => [
             'label' => 'Competition spotlight',
             'help' => 'Full-width images behind the featured competition. Leave empty to use the competition cover.',
             'min' => 0,
+            'max' => 5,
+        ],
+        'hero' => [
+            'label' => 'Banner slideshow',
+            'help' => 'Full-width photos near the end of the home page, behind the invitation to enter a competition. They cross-fade every few seconds.',
+            'min' => 1,
             'max' => 5,
         ],
     ];
@@ -147,10 +150,23 @@ class HomePage
         }
 
         return [
-            'heroSlides' => array_map(Media::url(...), $content['hero']),
+            'villaFrames' => static::villaFrames(),
             'spotlightSlides' => array_map(Media::url(...), $spotlight),
+            'bannerSlides' => array_map(Media::url(...), $content['hero']),
             'projects' => $projects,
             'competition' => $competition,
         ];
+    }
+
+    /**
+     * URL of the 3D villa's still frames, with {n} for the frame number. The
+     * version makes browsers fetch new frames after they are rendered again
+     * (scripts/render-villa-frames.mjs).
+     */
+    public static function villaFrames(): string
+    {
+        $first = public_path('images/villa/frame-00.webp');
+
+        return asset('images/villa/frame-{n}.webp').'?v='.(is_file($first) ? filemtime($first) : 0);
     }
 }

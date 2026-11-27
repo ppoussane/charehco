@@ -24,7 +24,7 @@ class ContactController extends Controller
 
         return view('site.contact', [
             'image' => Media::url(end($hero) ?: null),
-            'contact' => config('charehco.contact'),
+            'contact' => config('chareharch.contact'),
         ]);
     }
 

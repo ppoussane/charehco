@@ -1,11 +1,4 @@
 @php
-    $steps = [
-        ['title' => __('Read the brief'), 'text' => __('Each competition publishes a clear brief, the documents to submit, the prizes and the timeline.')],
-        ['title' => __('Register and prepare'), 'text' => __('Create a free account, start your entry and develop your proposal at your own pace.')],
-        ['title' => __('Upload before the deadline'), 'text' => __('Upload the required documents and submit. You can replace files until the deadline.')],
-        ['title' => __('Independent jury'), 'text' => __('An independent jury reviews every entry — anonymously by default — and the results are announced.')],
-    ];
-
     $principles = [
         ['title' => __('Open to all'), 'text' => __('Anyone with an idea can take part: established practices, young offices and students alike.')],
         ['title' => __('Fair'), 'text' => __('A clear brief and anonymous judging give every entry the same chance.')],
@@ -13,7 +6,7 @@
     ];
 @endphp
 
-<x-layouts::site :title="__('About us')" :description="__('Charehco organises open architecture competitions and shares the projects that inspire them.')" :overlay-header="true">
+<x-layouts::site :title="__('About us')" :description="__('Chareharch organises open architecture competitions and shares the projects that inspire them.')" :overlay-header="true">
     {{-- Hero --}}
     <section class="relative h-[80svh] min-h-[520px] overflow-hidden bg-ink" data-parallax-parent>
         <div class="absolute inset-0" data-parallax-item>
@@ -25,7 +18,7 @@
         <div class="absolute inset-x-0 top-1/2 z-10 -translate-y-1/2">
             <div class="container-site text-center text-white">
                 <h1 class="display-1">
-                    <span class="block" data-hero-line>{{ __('About Charehco') }}</span>
+                    <span class="block" data-hero-line>{{ __('About Chareharch') }}</span>
                     <em class="block text-gold" data-hero-line>{{ __('Architecture through open competition') }}</em>
                 </h1>
             </div>
@@ -43,7 +36,7 @@
                     </h2>
                 </div>
                 <div class="space-y-6 text-ink/85 lg:col-span-6 lg:col-start-7" data-fade>
-                    <p>{{ __('Charehco organises open architecture competitions that invite architects, designers and students to answer real questions about how we live, work and gather. Every competition starts with a carefully written brief and ends with ideas that can shape real places.') }}</p>
+                    <p>{{ __('Chareharch organises open architecture competitions that invite architects, designers and students to answer real questions about how we live, work and gather. Every competition starts with a carefully written brief and ends with ideas that can shape real places.') }}</p>
                     <p>{{ __('Alongside the competitions we share projects from our community — built work and bold concepts — so that good ideas travel further.') }}</p>
                     <div class="flex flex-wrap gap-x-10 gap-y-3 pt-2">
                         <a href="{{ route('competitions.index') }}" class="btn btn-dark">{{ __('See open competitions') }}<x-site.arrow /></a>
@@ -63,15 +56,7 @@
                     <em class="text-bronze">{{ __('From brief to results') }}</em>
                 </h2>
 
-                <ol class="mt-12 grid gap-10 sm:grid-cols-2 lg:mt-16 lg:grid-cols-4 lg:gap-8" data-fade>
-                    @foreach ($steps as $i => $step)
-                        <li class="border-t border-ink/15 pt-6">
-                            <span class="font-serif text-[2.75rem] leading-none text-gold" aria-hidden="true">{{ App\Support\Locale::digits(sprintf('%02d', $i + 1)) }}</span>
-                            <h3 class="mt-5 text-[19px] leading-7 font-normal">{{ $step['title'] }}</h3>
-                            <p class="mt-2 text-[15px] leading-7 text-ink/75">{{ $step['text'] }}</p>
-                        </li>
-                    @endforeach
-                </ol>
+                <x-site.competition-steps class="mt-12 lg:mt-16" data-fade />
             </div>
         </div>
     </section>

@@ -18,12 +18,12 @@ function contactForm(array $overrides = []): array
 }
 
 test('the about page renders in English and Farsi', function () {
-    $this->get(route('about'))->assertOk()->assertSee('About Charehco')->assertSee('How a competition works');
+    $this->get(route('about'))->assertOk()->assertSee('About Chareharch')->assertSee('How a competition works');
 
     $this->withSession(['locale' => 'fa'])->get(route('about'))
         ->assertOk()
         ->assertSee('dir="rtl"', false)
-        ->assertSee('دربارهٔ چاره‌کو');
+        ->assertSee('دربارهٔ چاره‌آرک');
 });
 
 test('about and contact are linked from the site navigation', function () {
@@ -33,11 +33,11 @@ test('about and contact are linked from the site navigation', function () {
 });
 
 test('the contact page shows only the contact details that are configured', function () {
-    config(['charehco.contact.email' => 'studio@charehco.test', 'charehco.contact.phone' => null]);
+    config(['chareharch.contact.email' => 'studio@chareharch.test', 'chareharch.contact.phone' => null]);
 
     $this->get(route('contact'))
         ->assertOk()
-        ->assertSee('studio@charehco.test')
+        ->assertSee('studio@chareharch.test')
         ->assertDontSee('tel:', false);
 });
 

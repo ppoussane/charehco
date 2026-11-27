@@ -7,7 +7,7 @@
                         <span>{{ __('Projects') }}</span>
                         <em class="text-bronze">{{ __('Architecture with intent') }}</em>
                     </h1>
-                    <p class="mt-6 max-w-xl text-ink/80">{{ __('Houses, places and ideas shared by the Charehco community — from competition-winning concepts to built work.') }}</p>
+                    <p class="mt-6 max-w-xl text-ink/80">{{ __('Houses, places and ideas shared by the Chareharch community — from competition-winning concepts to built work.') }}</p>
                 </div>
 
                 <div class="mt-14 grid gap-x-6 gap-y-14 md:grid-cols-2 lg:mt-20 xl:gap-x-8" data-reveal-parent>

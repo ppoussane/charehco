@@ -14,8 +14,9 @@ class AboutController extends Controller
      */
     public function __invoke(): View
     {
-        $images = collect(HomePage::published())
-            ->flatten()
+        $published = HomePage::published();
+
+        $images = collect([...$published['hero'], ...$published['spotlight']])
             ->unique()
             ->values()
             ->map(Media::url(...));

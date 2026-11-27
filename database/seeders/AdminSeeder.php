@@ -14,12 +14,12 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        $email = config('charehco.admin_email');
+        $email = config('chareharch.admin_email');
 
         $admin = User::where('email', $email)->first();
 
         if (! $admin) {
-            $password = config('charehco.admin_password');
+            $password = config('chareharch.admin_password');
 
             if (blank($password)) {
                 $password = Str::password(20);

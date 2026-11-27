@@ -1,7 +1,7 @@
 @props([
     'title' => null,
     'description' => null,
-    // Transparent header with white text over a full-screen image.
+    // See-through header: true over a dark picture (white text), 'dark' over a light background.
     'overlayHeader' => false,
     'preview' => false,
 ])
@@ -11,7 +11,7 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{{ filled($title) ? $title.' | '.config('app.name') : config('app.name').' | '.__('Architecture & competitions') }}</title>
-        <meta name="description" content="{{ $description ?? __('Charehco organises architecture competitions and shares inspiring projects.') }}">
+        <meta name="description" content="{{ $description ?? __('Chareharch organises architecture competitions and shares inspiring projects.') }}">
         @if ($preview)
             <meta name="robots" content="noindex, nofollow">
         @endif

@@ -8,7 +8,7 @@ use Database\Seeders\AdminSeeder;
 use Livewire\Livewire;
 
 test('the admin seeder creates the admin account from config', function () {
-    config(['charehco.admin_email' => 'boss@example.com', 'charehco.admin_password' => 'secret-password-123']);
+    config(['chareharch.admin_email' => 'boss@example.com', 'chareharch.admin_password' => 'secret-password-123']);
 
     $this->seed(AdminSeeder::class);
 

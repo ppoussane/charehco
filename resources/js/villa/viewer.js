@@ -1,30 +1,32 @@
 /*
- * The interactive villa on the home page.
+ * The interactive villa at the top of the home page.
  *
- * Hover over the model and scroll: it turns right as you scroll down and left
- * as you scroll up. After half a turn either way the page scrolls on again, so
- * nobody gets stuck. It can also be dragged or swiped sideways, and turned with
- * the arrow keys. Frames are drawn only while it moves and is on screen.
+ * It has four views, a quarter turn apart. Hover over the villa and scroll:
+ * each scroll turns it straight to the next view (down) or back to the one
+ * before (up). After the last view the page scrolls on again, so nobody gets
+ * stuck. It can also be dragged or swiped (it settles on the nearest view),
+ * turned with the arrow keys, or sent to a view with the markers below it.
+ *
+ * Where WebGL works the model is real 3D (scene.js, which brings in Three.js).
+ * Other browsers get still frames (frames.js). Until either is ready, the page
+ * shows the first frame as a picture.
  */
-import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { BOUNDS, createVilla } from './model.js';
+import { createFrameView } from './frames.js';
+import { REST, VIEWS } from './settings.js';
 
-const REST = -0.55; // starting view: three-quarters, showing the front and the cantilever
-const LIMIT = Math.PI; // how far scrolling turns it each way before the page scrolls on
-const WHEEL_SPEED = 0.0035; // radians per pixel scrolled: about 20° per wheel notch
-const DRAG_SPEED = 0.008; // radians per pixel dragged
-const KEY_STEP = Math.PI / 12; // 15° per arrow key press
-const PAUSE_MS = 400; // a pause in wheel input this long ends a scroll gesture
-const ELEVATION = THREE.MathUtils.degToRad(24); // camera height, as an angle
-const MARGIN = 0.94; // share of the frame the model may fill
 const TURN = Math.PI * 2;
+const QUARTER = TURN / VIEWS; // from one view to the next
+const TURN_MS = 750; // how long the turn to the next view takes
+const STEP_LOCK_MS = 650; // after each turn starts, further wheel input is held this long
+const STEP_PIXELS = 30; // wheel distance that turns to the next view
+const PAUSE_MS = 400; // a pause in wheel input this long ends a scroll gesture
+const DRAG_SPEED = 0.008; // radians per pixel dragged
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-const wrap = (angle) => angle - TURN * Math.round(angle / TURN);
+const easeOut = (t) => 1 - (1 - t) ** 3;
 
-/** How far an angle is from the starting view: -π to π, keeping exactly ±π as it is. */
-const offsetFrom = (angle) => (Math.abs(angle - REST) <= Math.PI + 1e-6 ? angle - REST : wrap(angle - REST));
+/** The view nearest an angle, counting whole turns (0 is the first view). */
+const viewAt = (angle) => Math.round((angle - REST) / QUARTER);
 
 /** Wheel distance in pixels, whatever unit the device reports. */
 function wheelPixels(event) {
@@ -34,160 +36,123 @@ function wheelPixels(event) {
     return delta;
 }
 
-export function mountVilla(stage, { reduceMotion = false } = {}) {
-    let renderer;
+/** Trackpads keep sending ever smaller wheel events after the fingers lift; those are not a new scroll. */
+function coasting(sizes) {
+    if (sizes.length < 6) return false;
+    const mean = (list) => list.reduce((sum, size) => sum + size, 0) / list.length;
+    return mean(sizes.slice(-3)) < mean(sizes.slice(0, -3)) * 0.7;
+}
+
+function supportsWebGL() {
     try {
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        const context = document.createElement('canvas').getContext('webgl2');
+        context?.getExtension('WEBGL_lose_context')?.loseContext();
+        return Boolean(context);
     } catch {
-        stage.dataset.villaState = 'unsupported';
-        return;
+        return false;
     }
+}
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setClearColor(0x000000, 0);
-    renderer.toneMapping = THREE.NeutralToneMapping;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
+/** The 3D view where WebGL works, otherwise the still frames. */
+async function createView(stage) {
+    if (supportsWebGL()) {
+        try {
+            const { createScene } = await import('./scene.js');
+            return createScene();
+        } catch (error) {
+            console.warn('The 3D view could not start; showing still frames instead.', error);
+        }
+    }
+    return createFrameView(stage.dataset.frames);
+}
 
-    const canvas = renderer.domElement;
+export async function mountVilla(stage, { reduceMotion = false } = {}) {
+    const view = await createView(stage);
+    await view.ready;
+
+    const { canvas } = view;
+    canvas.classList.add('villa-stage__view');
     canvas.setAttribute('aria-hidden', 'true');
-    stage.prepend(canvas);
+    stage.append(canvas);
 
-    // Scene ----------------------------------------------------------------------
-    const scene = new THREE.Scene();
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environmentIntensity = 0.5;
-    pmrem.dispose();
-
-    scene.add(new THREE.HemisphereLight('#fff8ee', '#a39882', 0.9));
-
-    // Low afternoon sun from the left, so the cantilever throws its shadow across the deck.
-    const sun = new THREE.DirectionalLight('#fff2df', 3.2);
-    sun.position.set(-22, 19, 10);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    Object.assign(sun.shadow.camera, { left: -17, right: 17, top: 17, bottom: -17, near: 10, far: 70 });
-    sun.shadow.camera.updateProjectionMatrix();
-    sun.shadow.bias = -0.0003;
-    sun.shadow.normalBias = 0.02;
-    sun.shadow.radius = 3;
-    scene.add(sun);
-
-    const villa = createVilla();
-    scene.add(villa);
-
-    const camera = new THREE.PerspectiveCamera(26, 1, 1, 300);
-    const forward = new THREE.Vector3(0, -Math.sin(ELEVATION), -Math.cos(ELEVATION));
-    const up = new THREE.Vector3(0, Math.cos(ELEVATION), -Math.sin(ELEVATION));
-    const bounds = BOUNDS.flatMap(([radius, height]) =>
-        Array.from({ length: 48 }, (_, i) => new THREE.Vector3(Math.cos((i / 48) * TURN) * radius, height, Math.sin((i / 48) * TURN) * radius)),
-    );
-
-    // State ----------------------------------------------------------------------
-    // `angle` is what is drawn; it eases towards `target` at `speed` (per second).
-    // It starts turned away and turns into view the first time it is seen.
-    let angle = reduceMotion ? REST : REST - 1.2;
-    let target = angle;
-    let speed = 7;
-    let introduced = reduceMotion;
+    let angle = REST; // what is drawn
+    let goal = 0; // the view shown or being turned to, counted without wrapping round
+    let tween = null; // the turn under way: { from, to, start, duration }
     let visible = false;
     let frame = 0;
-    let lastTime = 0;
 
-    const track = stage.closest('figure')?.querySelector('[data-villa-track]');
     const numbers = new Intl.NumberFormat(document.documentElement.lang || undefined);
+    const current = () => ((goal % VIEWS) + VIEWS) % VIEWS;
+
+    // One marker per view, below the villa.
+    const markers = stage.closest('figure')?.querySelector('[data-villa-dots]');
+    const dots = markers
+        ? Array.from({ length: VIEWS }, (_, index) => {
+              const dot = document.createElement('button');
+              dot.type = 'button';
+              dot.setAttribute('aria-label', markers.dataset.label.replace(':n', numbers.format(index + 1)));
+              dot.addEventListener('click', () => showView(index));
+              markers.append(dot);
+              return dot;
+          })
+        : [];
 
     function draw() {
-        villa.rotation.y = angle;
-        renderer.render(scene, camera);
-        track?.style.setProperty('--turn', ((offsetFrom(angle) / Math.PI + 1) / 2).toFixed(4));
+        view.render(angle);
     }
 
     function animate() {
         if (frame || !visible) return;
-        lastTime = performance.now();
         frame = requestAnimationFrame(tick);
     }
 
     function tick(now) {
         frame = 0;
-        const seconds = Math.min(0.25, (now - lastTime) / 1000);
-        lastTime = now;
-        angle += (target - angle) * (1 - Math.exp(-speed * seconds));
-        if (Math.abs(target - angle) < 0.001) angle = target;
-        draw();
-
-        if (angle !== target) {
-            if (visible) frame = requestAnimationFrame(tick);
-        } else {
-            speed = 7;
-            normalize();
-            announce();
+        if (tween) {
+            const t = tween.duration ? clamp((now - tween.start) / tween.duration, 0, 1) : 1;
+            angle = tween.from + (tween.to - tween.from) * easeOut(t);
+            if (t === 1) {
+                tween = null;
+                goal = current(); // drop whole turns; the view looks the same
+                angle = REST + goal * QUARTER;
+            }
         }
+        draw();
+        if (tween && visible) frame = requestAnimationFrame(tick);
     }
 
-    /** After dragging past half a turn, drops the whole turns (the view does not change). */
-    function normalize() {
-        const shift = target - REST - offsetFrom(target);
-        target -= shift;
-        angle -= shift;
-    }
-
-    function turnTo(offset, rate) {
-        introduced = true;
-        target = REST + clamp(offset, -LIMIT, LIMIT);
-        speed = rate;
+    /** Turns to view `next`, counted like `goal` (it may run past the last view to wrap round). */
+    function turnTo(next) {
+        goal = next;
+        tween = { from: angle, to: REST + goal * QUARTER, start: performance.now(), duration: reduceMotion ? 0 : TURN_MS };
+        announce();
         animate();
     }
 
+    /** Turns to view `index` (0 to VIEWS - 1) the short way round. */
+    function showView(index) {
+        let steps = index - current();
+        if (steps > VIEWS / 2) steps -= VIEWS;
+        if (steps < -VIEWS / 2) steps += VIEWS;
+        if (steps) turnTo(goal + steps);
+    }
+
     function announce() {
-        const degrees = Math.round(THREE.MathUtils.radToDeg(offsetFrom(target)));
-        const { textFront, textRight, textLeft } = stage.dataset;
-        stage.setAttribute('aria-valuenow', String(degrees));
-        stage.setAttribute(
-            'aria-valuetext',
-            degrees === 0 ? textFront : (degrees > 0 ? textRight : textLeft).replace(':degrees', numbers.format(Math.abs(degrees))),
-        );
+        const shown = current();
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('is-active', index === shown);
+            dot.setAttribute('aria-current', index === shown ? 'true' : 'false');
+        });
+        stage.setAttribute('aria-valuenow', String(shown + 1));
+        stage.setAttribute('aria-valuetext', stage.dataset.textView.replace(':n', numbers.format(shown + 1)).replace(':total', numbers.format(VIEWS)));
     }
 
     function resize() {
         const width = stage.clientWidth;
         const height = stage.clientHeight;
         if (!width || !height) return;
-
-        renderer.setSize(width, height, false);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        fitCamera();
+        view.setSize(width, height);
         draw();
-    }
-
-    /**
-     * Moves the camera (looking down at a fixed angle) as close as it can get
-     * while every bounding point stays inside the frame. With the camera's axes
-     * fixed, each point gives a straight-line limit on its position.
-     */
-    function fitCamera() {
-        const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * MARGIN;
-        const tanH = tanV * camera.aspect;
-        const points = bounds.map((p) => ({ x: p.x, y: p.dot(up), z: p.dot(forward) }));
-
-        let depth = Infinity; // camera position along `forward`
-        for (const p of points) {
-            depth = Math.min(depth, p.z - Math.abs(p.x) / tanH);
-            for (const q of points) depth = Math.min(depth, (p.z + q.z) / 2 - (p.y - q.y) / (2 * tanV));
-        }
-
-        let low = -Infinity; // range of camera heights (along `up`) that fits everything
-        let high = Infinity;
-        for (const p of points) {
-            low = Math.max(low, p.y - (p.z - depth) * tanV);
-            high = Math.min(high, p.y + (p.z - depth) * tanV);
-        }
-
-        camera.position.copy(up).multiplyScalar((low + high) / 2).addScaledVector(forward, depth);
-        camera.lookAt(camera.position.clone().add(forward));
     }
 
     // Hover and scroll -------------------------------------------------------------
@@ -198,6 +163,10 @@ export function mountVilla(stage, { reduceMotion = false } = {}) {
     let hovering = false;
     let pointer = null;
     let lastPageWheel = -Infinity; // input time of the last wheel event that scrolled the page
+    let lastWheel = -Infinity;
+    let lockedUntil = -Infinity;
+    let distance = 0; // wheel distance gathered towards the next turn
+    const sizes = []; // sizes of the latest wheel events
 
     // Runs after the villa's own handler; whatever that handler let through scrolled the page.
     window.addEventListener('wheel', (event) => event.defaultPrevented || (lastPageWheel = event.timeStamp), { passive: true });
@@ -216,22 +185,42 @@ export function mountVilla(stage, { reduceMotion = false } = {}) {
             const pixels = wheelPixels(event);
             if (!pixels) return;
 
-            normalize();
-            const offset = target - REST;
-            if ((pixels > 0 && offset >= LIMIT - 0.001) || (pixels < 0 && offset <= -LIMIT + 0.001)) return;
+            const direction = Math.sign(pixels);
+            const atEnd = direction > 0 ? current() === VIEWS - 1 : current() === 0;
+            const locked = event.timeStamp < lockedUntil;
+            if (atEnd && !locked) return; // past the last view (or before the first) the page scrolls on
 
             event.preventDefault();
-            turnTo(offset + pixels * WHEEL_SPEED, 7);
+            if (event.timeStamp - lastWheel > 250) {
+                sizes.length = 0;
+                distance = 0;
+            }
+            lastWheel = event.timeStamp;
+            sizes.push(Math.abs(pixels));
+            if (sizes.length > 12) sizes.shift();
+
+            // Hold input while a turn gets going, and ignore a trackpad still coasting from the last swipe.
+            if (locked || atEnd || coasting(sizes)) {
+                distance = 0;
+                return;
+            }
+
+            distance = Math.sign(distance) === direction ? distance + pixels : pixels;
+            if (Math.abs(distance) < STEP_PIXELS) return;
+
+            distance = 0;
+            lockedUntil = event.timeStamp + STEP_LOCK_MS;
+            turnTo(goal + direction);
         },
         { passive: false },
     );
 
-    // Drag and swipe -----------------------------------------------------------------
+    // Drag and swipe: the villa follows, then settles on the nearest view ------------
     let drag = null;
 
     stage.addEventListener('pointerdown', (event) => {
         if (event.button !== 0) return;
-        drag = { id: event.pointerId, x: event.clientX, y: event.clientY, from: target, moving: false, lastX: event.clientX, lastTime: event.timeStamp, velocity: 0 };
+        drag = { id: event.pointerId, x: event.clientX, y: event.clientY, moving: false };
     });
 
     stage.addEventListener('pointermove', (event) => {
@@ -250,18 +239,13 @@ export function mountVilla(stage, { reduceMotion = false } = {}) {
                 return;
             }
             drag.moving = true;
+            drag.from = angle;
+            tween = null;
             stage.setPointerCapture(event.pointerId);
             stage.classList.add('is-dragging');
         }
 
-        const elapsed = event.timeStamp - drag.lastTime;
-        if (elapsed > 0) drag.velocity = (event.clientX - drag.lastX) / elapsed;
-        drag.lastX = event.clientX;
-        drag.lastTime = event.timeStamp;
-
-        introduced = true;
-        target = drag.from + dx * DRAG_SPEED;
-        speed = 20;
+        angle = drag.from + dx * DRAG_SPEED;
         animate();
     });
 
@@ -269,12 +253,12 @@ export function mountVilla(stage, { reduceMotion = false } = {}) {
         if (!drag || event.pointerId !== drag.id) return;
         if (drag.moving) {
             stage.classList.remove('is-dragging');
-            // Let go while moving and it spins on a little.
-            if (event.type === 'pointerup' && event.timeStamp - drag.lastTime < 80 && !reduceMotion) {
-                target += clamp(drag.velocity, -2.5, 2.5) * 160 * DRAG_SPEED;
-                speed = 3.5;
-            }
-            animate();
+            // A short swipe turns to the next view that way; a longer drag settles on the nearest view.
+            const from = viewAt(drag.from);
+            const nearest = viewAt(angle);
+            const dx = event.clientX - drag.x;
+            const swipe = event.type === 'pointerup' && Math.abs(dx) >= 30 ? Math.sign(dx) : 0;
+            turnTo(nearest === from ? from + swipe : nearest);
         }
         drag = null;
     };
@@ -284,33 +268,27 @@ export function mountVilla(stage, { reduceMotion = false } = {}) {
     // Keyboard ---------------------------------------------------------------------
     stage.addEventListener('keydown', (event) => {
         const step = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[event.key];
-        if (event.key !== 'Home' && !step) return;
+        if (event.key !== 'Home' && event.key !== 'End' && !step) return;
 
         event.preventDefault();
-        normalize();
-        turnTo(event.key === 'Home' ? 0 : target - REST + step * KEY_STEP, 7);
+        if (event.key === 'Home') showView(0);
+        else if (event.key === 'End') showView(VIEWS - 1);
+        else if (clamp(current() + step, 0, VIEWS - 1) !== current()) turnTo(goal + step);
     });
 
-    // Visibility and size ------------------------------------------------------------
-    new IntersectionObserver(
-        ([entry]) => {
-            visible = entry.isIntersecting;
-            if (!introduced && entry.intersectionRatio >= 0.35) {
-                introduced = true;
-                target = REST;
-                speed = 2.2;
-            }
-            animate();
-        },
-        { threshold: [0, 0.35] },
-    ).observe(stage);
+    // Visibility, size and late frames -------------------------------------------------
+    new IntersectionObserver(([entry]) => {
+        visible = entry.isIntersecting;
+        animate();
+    }).observe(stage);
 
     new ResizeObserver(resize).observe(stage);
     canvas.addEventListener('webglcontextrestored', draw);
+    view.onFrameLoaded?.(() => visible && draw());
 
     resize();
     announce();
-    Object.entries({ role: 'slider', tabindex: '0', 'aria-label': stage.dataset.label, 'aria-valuemin': '-180', 'aria-valuemax': '180' })
+    Object.entries({ role: 'slider', tabindex: '0', 'aria-label': stage.dataset.label, 'aria-valuemin': '1', 'aria-valuemax': String(VIEWS) })
         .forEach(([name, value]) => stage.setAttribute(name, value));
     stage.dataset.villaState = 'ready';
 }

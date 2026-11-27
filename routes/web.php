@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', HomeController::class)->name('home');
 
 Route::get('language/{locale}', LocaleController::class)
-    ->whereIn('locale', array_keys(config('charehco.locales')))
+    ->whereIn('locale', array_keys(config('chareharch.locales')))
     ->name('locale.switch');
 
 Route::get('about', AboutController::class)->name('about');

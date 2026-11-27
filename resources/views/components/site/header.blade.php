@@ -1,14 +1,20 @@
+{{--
+    overlay: false for a solid bar; true for a see-through bar with white text
+    over a dark picture; 'dark' for a see-through bar with dark text over a
+    light background. See-through bars turn solid once the page scrolls.
+--}}
 @props(['overlay' => false])
 
 @php
+    // Competitions first: most visitors come to take part in one.
     $left = [
-        ['label' => __('About us'), 'route' => 'about', 'active' => 'about'],
-        ['label' => __('Projects'), 'route' => 'projects.index', 'active' => 'projects.*'],
         ['label' => __('Competitions'), 'route' => 'competitions.index', 'active' => 'competitions.*'],
+        ['label' => __('Projects'), 'route' => 'projects.index', 'active' => 'projects.*'],
+        ['label' => __('About us'), 'route' => 'about', 'active' => 'about'],
     ];
 @endphp
 
-<header data-site-header @if ($overlay) data-overlay @endif @class(['site-header', 'is-solid' => ! $overlay])>
+<header data-site-header @if ($overlay) data-overlay="{{ $overlay === 'dark' ? 'dark' : 'light' }}" @endif @class(['site-header', 'is-solid' => ! $overlay])>
     <div class="container-site grid grid-cols-[1fr_auto_1fr] items-center gap-4">
         {{-- Left navigation --}}
         <nav class="hidden items-center gap-9 xl:flex" aria-label="{{ __('Primary') }}">

@@ -59,7 +59,7 @@ new #[Title('Home page')] class extends Component {
     public function validationAttributes(): array
     {
         return [
-            'heroUploads.*' => __('Hero slideshow'),
+            'heroUploads.*' => __('Banner slideshow'),
             'spotlightUploads.*' => __('Competition spotlight'),
         ];
     }
