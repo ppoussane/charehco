@@ -17,13 +17,16 @@ function contactForm(array $overrides = []): array
     ];
 }
 
-test('the about page renders in English and Farsi', function () {
-    $this->get(route('about'))->assertOk()->assertSee('About Chareharch')->assertSee('How a competition works');
-
-    $this->withSession(['locale' => 'fa'])->get(route('about'))
+test('the about page renders in Farsi by default and in English on request', function () {
+    $this->get(route('about'))
         ->assertOk()
         ->assertSee('dir="rtl"', false)
         ->assertSee('دربارهٔ چاره‌آرک');
+
+    $this->withSession(['locale' => 'en'])->get(route('about'))
+        ->assertOk()
+        ->assertSee('About Chareharch')
+        ->assertSee('How a competition works');
 });
 
 test('about and contact are linked from the site navigation', function () {
@@ -51,7 +54,8 @@ test('a visitor can send a message and the admin is notified', function () {
     Notification::fake();
     $admin = User::factory()->admin()->create();
 
-    $this->post(route('contact.store'), contactForm())
+    $this->withSession(['locale' => 'en'])
+        ->post(route('contact.store'), contactForm())
         ->assertRedirect(route('contact').'#contact-form')
         ->assertSessionHas('contact_sent');
 

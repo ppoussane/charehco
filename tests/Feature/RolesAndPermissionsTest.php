@@ -112,7 +112,7 @@ test('only the admin can open the home page editor and its preview', function ()
     $admin = User::factory()->admin()->create();
 
     $this->actingAs($admin)->get(route('admin.home-page'))->assertOk();
-    $this->actingAs($admin)->get(route('admin.home-page.preview'))->assertOk()->assertSee('Preview');
+    $this->actingAs($admin)->get(route('admin.home-page.preview'))->assertOk()->assertSee('noindex, nofollow', false);
 
     $this->actingAs(User::factory()->editor()->create())->get(route('admin.home-page'))->assertForbidden();
     $this->actingAs(User::factory()->editor()->create())->get(route('admin.home-page.preview'))->assertForbidden();

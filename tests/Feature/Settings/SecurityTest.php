@@ -33,7 +33,7 @@ class SecurityTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+            ->withSession(['auth.password_confirmed_at' => time(), 'locale' => 'en'])
             ->get(route('security.edit'));
 
         $response->assertOk();
@@ -61,7 +61,7 @@ class SecurityTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+            ->withSession(['auth.password_confirmed_at' => time(), 'locale' => 'en'])
             ->get(route('security.edit'))
             ->assertOk()
             ->assertSee('Update password')

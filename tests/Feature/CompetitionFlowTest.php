@@ -104,7 +104,7 @@ test('assigned jury can review entries and open documents', function () {
     $entry = submittedEntry($this->competition);
     $document = $entry->documents->first();
 
-    $this->actingAs($jury)->get(route('review.competition', $this->competition->id))->assertOk()->assertSee('Entry '.$entry->code);
+    $this->actingAs($jury)->get(route('review.competition', $this->competition->id))->assertOk()->assertSee($entry->code);
     $this->actingAs($jury)->get(route('review.entries.show', $entry))->assertOk()->assertDontSee($entry->user->name);
     $this->actingAs($jury)->get(route('documents.show', $document))->assertOk();
 });

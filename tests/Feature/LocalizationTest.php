@@ -7,16 +7,7 @@ use App\Support\LocalDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\File;
 
-test('the site is English and left-to-right by default', function () {
-    $this->get(route('home'))
-        ->assertOk()
-        ->assertSee('lang="en" dir="ltr"', false)
-        ->assertSee('Selected projects');
-});
-
-test('choosing FA switches the whole site to Farsi and right-to-left', function () {
-    $this->get(route('locale.switch', 'fa'))->assertRedirect();
-
+test('the site is Farsi and right-to-left by default', function () {
     $this->get(route('home'))
         ->assertOk()
         ->assertSee('lang="fa" dir="rtl"', false)
@@ -24,11 +15,23 @@ test('choosing FA switches the whole site to Farsi and right-to-left', function 
         ->assertDontSee('Selected projects');
 });
 
-test('the language choice is remembered in a cookie', function () {
-    $response = $this->get(route('locale.switch', 'fa'));
-    $response->assertCookie('locale', 'fa');
+test('choosing EN switches the whole site to English and left-to-right', function () {
+    $this->get(route('locale.switch', 'en'))->assertRedirect();
 
-    $this->withCookie('locale', 'fa')->get(route('competitions.index'))->assertSee('dir="rtl"', false);
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('lang="en" dir="ltr"', false)
+        ->assertSee('Selected projects')
+        ->assertDontSee('پروژه‌های منتخب');
+});
+
+test('the language choice is remembered in a cookie', function () {
+    $response = $this->get(route('locale.switch', 'en'));
+    $response->assertCookie('locale', 'en');
+
+    // A later visit, with only the cookie to go on.
+    $this->flushSession();
+    $this->withCookie('locale', 'en')->get(route('competitions.index'))->assertSee('dir="ltr"', false);
 });
 
 test('unsupported languages are rejected', function () {

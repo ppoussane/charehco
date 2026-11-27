@@ -76,9 +76,13 @@ return [
     | by Laravel's translation / localization methods. This option can be
     | set to any locale for which you plan to have translation strings.
     |
+    | Visitors see the site in Farsi until they choose another language
+    | (remembered in their session and a cookie). Strings without a Farsi
+    | translation fall back to English.
+    |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'fa'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
